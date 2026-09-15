@@ -3,7 +3,9 @@
 import { createContext, useContext } from "react";
 
 export interface ShopUiValue {
+  searchOpen: boolean;
   openSearch: () => void;
+  closeSearch: () => void;
   openCatalog: () => void;
   openCart: () => void;
 }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AddToCartPanel } from "@/components/AddToCartPanel";
-import { ProductGrid } from "@/components/ProductGrid";
+import { ProductCard } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
 import { similarProducts } from "@/lib/storefront/catalog";
 import { getCustomerCode } from "@/lib/customer/session";
@@ -61,24 +61,21 @@ export default async function ProductPage({
 
   if (!product) notFound();
 
-  const similar = similarProducts(product, catalog.products, 4);
+  const similar = similarProducts(product, catalog.products, 10);
   const price = displayPrice(product, store.currency);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:py-10">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:py-10">
       <nav className="flex flex-wrap items-center gap-1.5 text-xs text-faint">
         <Link href="/" className="transition hover:text-foreground">
           Bosh sahifa
         </Link>
-        <span>/</span>
-        <Link href="/catalog" className="transition hover:text-foreground">
-          Katalog
-        </Link>
         {product.category_id && product.category_name && (
           <>
             <span>/</span>
+            {/* The home page groups products under their top-level category. */}
             <Link
-              href={`/catalog?category=${product.category_id}`}
+              href={`/#category-${product.category_parent_id ?? product.category_id}`}
               className="transition hover:text-foreground"
             >
               {product.category_name}
@@ -87,13 +84,13 @@ export default async function ProductPage({
         )}
       </nav>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-14">
-        <div className="relative aspect-square overflow-hidden rounded-2xl bg-surface">
+      <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-12">
+        <div className="relative mx-auto aspect-square w-full max-w-72 overflow-hidden rounded-2xl bg-surface sm:max-w-sm lg:max-w-none">
           {catalog.showImages ? (
             <ProductImage
               src={product.image}
               alt={product.name}
-              sizes="(max-width: 1024px) 100vw, 512px"
+              sizes="(max-width: 640px) 288px, (max-width: 1024px) 384px, 472px"
               priority
             />
           ) : (
@@ -103,7 +100,7 @@ export default async function ProductPage({
           )}
         </div>
 
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
             {product.name}
           </h1>
@@ -143,14 +140,20 @@ export default async function ProductPage({
       </div>
 
       {similar.length > 0 && (
-        <section className="mt-16">
+        <section className="mt-12 border-t border-border pt-8">
           <h2 className="text-lg font-semibold tracking-tight">O&apos;xshash mahsulotlar</h2>
-          <div className="mt-5">
-            <ProductGrid
-              products={similar}
-              showImages={catalog.showImages}
-              showStock={catalog.showStock}
-            />
+          {/* One row that scrolls on its own; overscroll-x-contain stops a hard
+              swipe from carrying on to the page or the browser's back gesture. */}
+          <div className="no-scrollbar -mx-4 mt-5 flex snap-x snap-proximity scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 pt-1 sm:gap-4">
+            {similar.map((item) => (
+              <div key={item.id} className="w-40 shrink-0 snap-start sm:w-48">
+                <ProductCard
+                  product={item}
+                  showImages={catalog.showImages}
+                  showStock={catalog.showStock}
+                />
+              </div>
+            ))}
           </div>
         </section>
       )}

@@ -204,22 +204,3 @@ export function suggestProducts(
     .slice(0, limit)
     .map(({ product }) => product);
 }
-
-/** All descendant category IDs, so a parent category shows its children too. */
-export function categoryWithDescendants(tree: Category[], id: number): Set<number> {
-  const ids = new Set<number>();
-  const find = (nodes: Category[]): Category | undefined => {
-    for (const node of nodes) {
-      if (node.id === id) return node;
-      const hit = find(node.children);
-      if (hit) return hit;
-    }
-  };
-  const collect = (node: Category) => {
-    ids.add(node.id);
-    node.children.forEach(collect);
-  };
-  const root = find(tree);
-  if (root) collect(root);
-  return ids;
-}

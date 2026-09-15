@@ -77,7 +77,7 @@ export function BannerCarousel({ banners }: { banners: CarouselBanner[] }) {
                     </p>
                   )}
                   <Link
-                    href="/catalog"
+                    href="/#all-products"
                     tabIndex={i === index ? 0 : -1}
                     className="mt-5 inline-flex rounded-full bg-[#1152bd] px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-blue-900/15 transition hover:-translate-y-0.5 hover:bg-[#0d4299] sm:px-6 sm:text-sm"
                   >

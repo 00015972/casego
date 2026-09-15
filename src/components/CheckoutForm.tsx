@@ -16,16 +16,6 @@ import { CheckIcon, MapIcon, PinIcon } from "./icons";
 const PAYMENT_METHODS = [
   { id: "cash", title: "Naqd", hint: "Yetkazib berilganda to'lash" },
   { id: "card", title: "Karta", hint: "Kuryerga karta orqali" },
-  { id: "transfer", title: "O'tkazma", hint: "Hisob raqamiga o'tkazish" },
-  { id: "click", title: "Click", hint: "Click orqali to'lov" },
-  { id: "payme", title: "Payme", hint: "Payme orqali to'lov" },
-  { id: "uzum", title: "Uzum", hint: "Uzum orqali to'lov" },
-  { id: "humo", title: "Humo", hint: "Humo kartasi orqali" },
-  { id: "uzcard", title: "UzCard", hint: "UzCard orqali" },
-  { id: "installment", title: "Bo'lib to'lash", hint: "Muddatli to'lov" },
-  { id: "credit", title: "Nasiya", hint: "Mijoz hisobiga qarz" },
-  { id: "mixed", title: "Aralash", hint: "Bir nechta usulda to'lash" },
-  { id: "exchange_credit", title: "Ayirboshlash", hint: "Almashuv va qo'shimcha to'lov" },
 ] as const;
 
 export function CheckoutForm() {
@@ -138,7 +128,7 @@ export function CheckoutForm() {
           Do&apos;kon tez orada siz bilan bog&apos;lanadi.
         </p>
         <Link
-          href="/catalog"
+          href="/#all-products"
           className="mt-8 inline-flex h-11 items-center rounded-full bg-accent px-6 text-sm font-medium text-accent-contrast transition hover:opacity-90"
         >
           Xaridni davom ettirish
@@ -152,7 +142,7 @@ export function CheckoutForm() {
       <div className="rounded-2xl border border-border bg-surface px-6 py-16 text-center">
         <p className="text-sm text-muted">Savat bo&apos;sh.</p>
         <Link
-          href="/catalog"
+          href="/#all-products"
           className="mt-5 inline-flex h-11 items-center rounded-full bg-accent px-6 text-sm font-medium text-accent-contrast transition hover:opacity-90"
         >
           Katalogga o&apos;tish

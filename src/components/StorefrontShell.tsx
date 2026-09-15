@@ -1,26 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 import { useCart } from "@/lib/cart/CartProvider";
+import { scrollToSection } from "@/lib/scroll";
 import { useStore } from "@/lib/storefront/StoreProvider";
-import { searchProducts, suggestProducts } from "@/lib/storefront/catalog";
 import type { Category, Product } from "@/lib/storefront/types";
 
 import { BottomNav } from "./BottomNav";
 import { CartView } from "./CartView";
 import { Header } from "./Header";
-import { ProductImage } from "./ProductImage";
 import { SafeImage } from "./SafeImage";
 import { ShopUiContext, type ShopUiValue } from "./ShopUiContext";
-import { BoxIcon, ChevronDownIcon, CloseIcon, SearchIcon } from "./icons";
+import { BoxIcon, CloseIcon } from "./icons";
 
 type OpenPanel = "search" | "catalog" | "cart" | null;
 
@@ -38,13 +32,17 @@ export function StorefrontShell({
   const [panel, setPanel] = useState<OpenPanel>(null);
   const { syncProducts } = useCart();
   const store = useStore();
+  const pathname = usePathname();
+  // Product pages end on their similar-products rail instead of the footer.
+  const showFooter = !pathname.startsWith("/product/");
 
   useEffect(() => {
     syncProducts(products, store.currency);
   }, [products, store.currency, syncProducts]);
 
+  // Search opens in place, so only the drawer and the sheet take over the page.
   useEffect(() => {
-    if (!panel) return;
+    if (!panel || panel === "search") return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const close = (event: KeyboardEvent) => {
@@ -57,26 +55,32 @@ export function StorefrontShell({
     };
   }, [panel]);
 
-  const controls = useMemo<ShopUiValue>(
+  const controls = useMemo(
     () => ({
       openSearch: () => setPanel("search"),
+      closeSearch: () =>
+        setPanel((current) => (current === "search" ? null : current)),
       openCatalog: () => setPanel("catalog"),
       openCart: () => setPanel("cart"),
     }),
     [],
   );
+  const shopUi = useMemo<ShopUiValue>(
+    () => ({ ...controls, searchOpen: panel === "search" }),
+    [controls, panel],
+  );
 
   return (
-    <ShopUiContext.Provider value={controls}>
-      <Header />
-      <main className="flex-1 pb-20 sm:pb-0">{children}</main>
-      {footer}
+    <ShopUiContext.Provider value={shopUi}>
+      <Header products={products} />
+      {/* Without the footer, the page itself has to clear the floating nav. */}
+      <main
+        className={`flex-1 ${showFooter ? "" : "pb-[calc(6rem+env(safe-area-inset-bottom))]"}`}
+      >
+        {children}
+      </main>
+      {showFooter && footer}
       <BottomNav />
-      <SearchOverlay
-        open={panel === "search"}
-        products={products}
-        onClose={() => setPanel(null)}
-      />
       <CategoryDrawer
         open={panel === "catalog"}
         categories={categories}
@@ -84,95 +88,6 @@ export function StorefrontShell({
       />
       <CartSheet open={panel === "cart"} onClose={() => setPanel(null)} />
     </ShopUiContext.Provider>
-  );
-}
-
-function SearchOverlay({
-  open,
-  products,
-  onClose,
-}: {
-  open: boolean;
-  products: Product[];
-  onClose: () => void;
-}) {
-  const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState("");
-  const trimmed = query.trim();
-  const direct = trimmed ? searchProducts(trimmed, products, 6) : [];
-  const suggestions = direct.length
-    ? direct
-    : trimmed
-      ? suggestProducts(trimmed, products, 6)
-      : [];
-
-  useEffect(() => {
-    if (open) window.setTimeout(() => inputRef.current?.focus(), 40);
-  }, [open]);
-
-  if (!open) return null;
-  const submit = () => {
-    if (!trimmed) return;
-    onClose();
-    router.push(`/catalog?q=${encodeURIComponent(trimmed)}`);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 bg-background/98 backdrop-blur" role="dialog" aria-modal="true" aria-label="Qidiruv">
-      <div className="mx-auto max-w-3xl px-4 py-5 sm:py-10">
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1">
-            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-faint">
-              <SearchIcon size={20} />
-            </span>
-            <input
-              ref={inputRef}
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={(event) => event.key === "Enter" && submit()}
-              placeholder="Mahsulot nomi yoki kategoriyasi"
-              aria-label="Mahsulot qidirish"
-              className="h-14 w-full rounded-full border border-border bg-surface-raised pl-12 pr-5 text-base outline-none transition focus:border-foreground"
-            />
-          </div>
-          <button onClick={onClose} aria-label="Yopish" className="rounded-full border border-border p-3 text-muted transition hover:text-foreground">
-            <CloseIcon size={20} />
-          </button>
-        </div>
-
-        <div className="mt-7">
-          {!trimmed ? (
-            <p className="text-center text-sm text-faint">Yozishni boshlang — natijalar shu yerda chiqadi.</p>
-          ) : suggestions.length === 0 ? (
-            <div className="rounded-2xl bg-surface px-5 py-12 text-center text-sm text-muted">Mahsulot topilmadi.</div>
-          ) : (
-            <>
-              <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-faint">
-                {direct.length ? "Natijalar" : "Shunga o'xshash mahsulotlar"}
-              </div>
-              <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface-raised">
-                {suggestions.map((product) => (
-                  <Link key={product.id} href={`/product/${product.id}`} onClick={onClose} className="flex items-center gap-4 p-3 transition hover:bg-surface">
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-surface">
-                      <ProductImage src={product.image} alt="" sizes="56px" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="line-clamp-1 text-sm font-medium">{product.name}</div>
-                      <div className="mt-0.5 line-clamp-1 text-xs text-faint">{product.category_name}</div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              <button onClick={submit} className="mt-5 h-11 w-full rounded-full bg-accent text-sm font-medium text-accent-contrast">
-                Barcha natijalarni ko&apos;rish
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -185,8 +100,8 @@ function CategoryDrawer({
   categories: Category[];
   onClose: () => void;
 }) {
+  const pathname = usePathname();
   const [query, setQuery] = useState("");
-  const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
   const normalized = query.trim().toLowerCase();
   const visible = categories.filter(
     (category) =>
@@ -194,6 +109,13 @@ function CategoryDrawer({
       category.name.toLowerCase().includes(normalized) ||
       category.children.some((child) => child.name.toLowerCase().includes(normalized)),
   );
+
+  // The home page lists every product under its top-level category, so each
+  // entry is a jump to that section — scrolled to directly when already there.
+  const jumpTo = (event: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+    onClose();
+    if (pathname === "/" && scrollToSection(sectionId)) event.preventDefault();
+  };
 
   return (
     <div className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`} aria-hidden={!open} inert={!open}>
@@ -209,45 +131,19 @@ function CategoryDrawer({
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Bo'limlarni qidirish..." className="mt-4 h-11 w-full rounded-full border border-border bg-surface px-4 text-sm outline-none focus:border-foreground" />
         </div>
         <div className="flex-1 space-y-2 overflow-y-auto p-3 pb-24">
-          <Link href="/catalog" onClick={onClose} className="flex rounded-xl bg-surface-raised px-4 py-3 text-sm font-medium">Barcha mahsulotlar</Link>
-          {visible.map((category) => {
-            const hasChildren = category.children.length > 0;
-            const isOpen = expanded.has(category.id) || Boolean(normalized);
-            return (
-              <div key={category.id} className="overflow-hidden rounded-xl border border-border bg-surface-raised">
-                {hasChildren ? (
-                  <button
-                    onClick={() => setExpanded((current) => {
-                      const next = new Set(current);
-                      if (next.has(category.id)) next.delete(category.id);
-                      else next.add(category.id);
-                      return next;
-                    })}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium"
-                    aria-expanded={isOpen}
-                  >
-                    <CategoryThumb category={category} />
-                    <span className="flex-1">{category.name}</span>
-                    <span className={`transition-transform ${isOpen ? "rotate-180" : ""}`}><ChevronDownIcon size={17} /></span>
-                  </button>
-                ) : (
-                  <Link href={`/catalog?category=${category.id}`} onClick={onClose} className="flex items-center gap-3 px-4 py-3 text-sm font-medium"><CategoryThumb category={category} />{category.name}</Link>
-                )}
-                {hasChildren && isOpen && (
-                  <div className="border-t border-border bg-surface/55">
-                    <Link href={`/catalog?category=${category.id}`} onClick={onClose} className="block px-5 py-3 text-sm text-muted hover:text-foreground">Hammasi</Link>
-                    {category.children
-                      .filter((child) => !normalized || child.name.toLowerCase().includes(normalized))
-                      .map((child) => (
-                        <Link key={child.id} href={`/catalog?category=${child.id}`} onClick={onClose} className="block border-t border-border/70 px-5 py-3 text-sm text-muted hover:text-foreground">
-                          {child.name}
-                        </Link>
-                      ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          <Link href="/#all-products" onClick={(event) => jumpTo(event, "all-products")} className="flex rounded-xl bg-surface-raised px-4 py-3 text-sm font-medium">Barcha mahsulotlar</Link>
+          {visible.map((category) => (
+            <Link
+              key={category.id}
+              href={`/#category-${category.id}`}
+              onClick={(event) => jumpTo(event, `category-${category.id}`)}
+              className="flex items-center gap-3 rounded-xl border border-border bg-surface-raised px-4 py-3 text-sm font-medium"
+            >
+              <CategoryThumb category={category} />
+              <span className="flex-1">{category.name}</span>
+              <span className="text-xs text-faint">{category.count}</span>
+            </Link>
+          ))}
         </div>
       </aside>
     </div>
@@ -269,17 +165,24 @@ function CategoryThumb({ category }: { category: Category }) {
 }
 
 function CartSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { count, ready } = useCart();
+
   return (
     <div className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`} aria-hidden={!open} inert={!open}>
       <button aria-label="Savatni yopish" onClick={onClose} className={`absolute inset-0 bg-foreground/35 backdrop-blur-sm transition-opacity ${open ? "opacity-100" : "opacity-0"}`} />
-      <section className={`absolute inset-x-0 bottom-0 mx-auto max-h-[88dvh] max-w-2xl overflow-y-auto rounded-t-3xl bg-background p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl transition-transform duration-300 ${open ? "translate-y-0" : "translate-y-full"}`} role="dialog" aria-modal="true" aria-label="Savat">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Savat</h2>
-          <div className="flex items-center gap-2">
-            <Link href="/cart" onClick={onClose} className="text-xs font-medium text-muted underline underline-offset-4">To&apos;liq ko&apos;rish</Link>
-            <button onClick={onClose} aria-label="Yopish" className="rounded-full p-2 text-muted hover:bg-surface"><CloseIcon size={19} /></button>
+      {/* The sheet never scrolls as a whole: its lines scroll and the total stays pinned. */}
+      <section className={`absolute inset-x-0 bottom-0 mx-auto flex max-h-[88dvh] max-w-140 flex-col overflow-hidden rounded-t-[28px] bg-background shadow-[0_-8px_40px_rgba(20,20,20,0.15)] transition-transform duration-300 ${open ? "translate-y-0" : "translate-y-full"}`} role="dialog" aria-modal="true" aria-label="Savatcha">
+        <div className="mx-auto mt-3.5 h-1 w-10 shrink-0 rounded-full bg-border" />
+        <div className="flex shrink-0 items-center justify-between px-5 pb-4 pt-3.5">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-[22px] font-semibold tracking-tight">Savatcha</h2>
+            {ready && count > 0 && (
+              <span className="rounded-full bg-sale/10 px-3 py-1 text-xs font-semibold text-sale">{count} ta</span>
+            )}
           </div>
+          <button onClick={onClose} aria-label="Yopish" className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-raised text-muted transition hover:text-foreground">
+            <CloseIcon size={18} />
+          </button>
         </div>
         <CartView compact onNavigate={onClose} />
       </section>

@@ -66,6 +66,13 @@ export const ChevronRightIcon = (props: { size?: number }) => (
   </Icon>
 );
 
+export const ArrowRightIcon = (props: { size?: number }) => (
+  <Icon {...props} strokeWidth={2.5}>
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </Icon>
+);
+
 export const BoxIcon = (props: { size?: number }) => (
   <Icon {...props} strokeWidth={1.2}>
     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />

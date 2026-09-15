@@ -32,7 +32,7 @@ export function StoreHero({
 
         <div className="flex flex-wrap gap-3">
           <Link
-            href="/catalog"
+            href="/#all-products"
             className="inline-flex h-11 items-center rounded-full bg-accent px-6 text-sm font-medium text-accent-contrast transition hover:opacity-90"
           >
             Katalogni ko&apos;rish

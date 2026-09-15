@@ -178,7 +178,7 @@ export function AddToCartPanel({
         <button
           onClick={handleAdd}
           disabled={soldOut || selection.max <= 0 || cartState.atLimit}
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-accent text-sm font-medium text-accent-contrast transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-border disabled:text-faint"
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-accent px-6 sm:max-w-64 text-sm font-medium text-accent-contrast transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-border disabled:text-faint"
         >
           {soldOut || selection.max <= 0 ? (
             "Mavjud emas"

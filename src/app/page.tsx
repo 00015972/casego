@@ -1,11 +1,11 @@
-import Link from "next/link";
-
 import { BannerCarousel, type CarouselBanner } from "@/components/BannerCarousel";
 import { CategoryRail } from "@/components/CategoryRail";
+import { CategorySections } from "@/components/CategorySections";
 import { ProductGrid } from "@/components/ProductGrid";
 import { SetupNotice } from "@/components/SetupNotice";
 import { StoreExplainer } from "@/components/StoreExplainer";
 import { getCustomerCode } from "@/lib/customer/session";
+import { groupProductsByCategory } from "@/lib/storefront/catalog";
 import { getCatalogView, getStore } from "@/lib/storefront/store";
 
 import audioBanner from "../../images/casego-banner-audio.png";
@@ -55,67 +55,71 @@ export default async function HomePage() {
     );
   }
 
-  const newest = [...catalog.products].sort((a, b) => b.id - a.id).slice(0, 8);
+  const groups = groupProductsByCategory(catalog.categories, catalog.products);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
-      {/* ERP artwork stays authoritative; branded local slides fill an empty feed. */}
-      <BannerCarousel
-        banners={store.banners.length > 0 ? store.banners : LOCAL_BANNERS}
-      />
+    // The category bar stays pinned for as long as this wrapper is on screen.
+    <div className="py-6 sm:py-8">
+      <div className="mx-auto max-w-7xl px-4">
+        {/* ERP artwork stays authoritative; branded local slides fill an empty feed. */}
+        <BannerCarousel
+          banners={store.banners.length > 0 ? store.banners : LOCAL_BANNERS}
+        />
+      </div>
 
-      {catalog.categories.length > 0 && (
-        <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-tight">Kategoriyalar</h2>
-          <CategoryRail categories={catalog.categories} />
-        </section>
+      {/* Outside the width cap so the pinned bar's background spans the viewport. */}
+      {groups.length > 0 && (
+        <CategoryRail categories={groups.map((group) => group.category)} />
       )}
 
-      {/* Best sellers come from the ERP's sales history; the section stays
-          hidden until that endpoint returns any product IDs. */}
-      {catalog.topProducts.length > 0 && (
-        <section className="mt-14">
-          <div className="flex items-end justify-between gap-4">
-            <h2 className="text-lg font-semibold tracking-tight">
-              Eng ko&apos;p sotilganlar
-            </h2>
-            <Link
-              href="/catalog"
-              className="shrink-0 text-sm text-muted transition hover:text-foreground"
-            >
-              Barchasi
-            </Link>
-          </div>
-          <div className="mt-5">
-            <ProductGrid
-              products={catalog.topProducts.slice(0, 8)}
+      {/* Padding rather than margin: a margin would collapse into the bar's
+          compensating bottom margin and let the content jump. */}
+      <div className="mx-auto max-w-7xl px-4 pt-6 sm:pt-8">
+        {/* Best sellers come from the ERP's sales history; the section stays
+            hidden until that endpoint returns any product IDs. */}
+        {catalog.topProducts.length > 0 && (
+          <section>
+            <div className="flex items-end justify-between gap-4">
+              <h2 className="text-lg font-semibold tracking-tight">
+                Eng ko&apos;p sotilganlar
+              </h2>
+              <a
+                href="#all-products"
+                className="shrink-0 text-sm text-muted transition hover:text-foreground"
+              >
+                Barchasi
+              </a>
+            </div>
+            <div className="mt-5">
+              <ProductGrid
+                products={catalog.topProducts.slice(0, 8)}
+                showImages={catalog.showImages}
+                showStock={catalog.showStock}
+              />
+            </div>
+          </section>
+        )}
+
+        {groups.length > 0 && (
+          <section id="all-products" className="mt-14 scroll-mt-36 first:mt-0">
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="text-lg font-semibold tracking-tight">
+                Barcha mahsulotlar
+              </h2>
+              <span className="shrink-0 text-sm text-faint">
+                {catalog.products.length} ta
+              </span>
+            </div>
+            <CategorySections
+              groups={groups}
               showImages={catalog.showImages}
               showStock={catalog.showStock}
             />
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      <section className="mt-14">
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="text-lg font-semibold tracking-tight">Yangi kelganlar</h2>
-          <Link
-            href="/catalog"
-            className="shrink-0 text-sm text-muted transition hover:text-foreground"
-          >
-            Barchasi
-          </Link>
-        </div>
-        <div className="mt-5">
-          <ProductGrid
-            products={newest}
-            showImages={catalog.showImages}
-            showStock={catalog.showStock}
-          />
-        </div>
-      </section>
-
-      <StoreExplainer />
+        <StoreExplainer />
+      </div>
     </div>
   );
 }

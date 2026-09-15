@@ -9,7 +9,7 @@ export default function NotFound() {
         tashlangan.
       </p>
       <Link
-        href="/catalog"
+        href="/#all-products"
         className="mt-8 inline-flex h-11 items-center rounded-full bg-accent px-6 text-sm font-medium text-accent-contrast transition hover:opacity-90"
       >
         Katalogga o&apos;tish

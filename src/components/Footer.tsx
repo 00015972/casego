@@ -20,7 +20,7 @@ export async function Footer() {
           <div className="text-sm font-semibold">Do&apos;kon</div>
           <ul className="mt-3 space-y-2 text-sm text-muted">
             <li>
-              <Link href="/catalog" className="transition hover:text-foreground">
+              <Link href="/#all-products" className="transition hover:text-foreground">
                 Katalog
               </Link>
             </li>
@@ -41,13 +41,14 @@ export async function Footer() {
           <div className="text-sm font-semibold">Buyurtma</div>
           <p className="mt-3 text-sm leading-relaxed text-muted">
             Kuryer orqali yetkazib berish yoki do&apos;kondan olib ketish.
-            Naqd, karta, Click, Payme, Uzum va boshqa qulay to&apos;lov usullari.
+            To&apos;lov naqd yoki karta orqali.
           </p>
         </div>
       </div>
 
       <div className="border-t border-border">
-        <div className="mx-auto max-w-7xl px-4 py-5 text-xs text-faint">
+        {/* The extra bottom padding keeps this line clear of the floating nav. */}
+        <div className="mx-auto max-w-7xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 text-xs text-faint">
           © {new Date().getFullYear()} {store.name}
         </div>
       </div>
